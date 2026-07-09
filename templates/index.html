@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ForensicLens — Digital Forensics Toolkit</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{--bg:#0d1117;--surface:#161b22;--surface2:#1c2128;--border:#30363d;--border2:#21262d;--text:#e6edf3;--text2:#8b949e;--text3:#6e7681;--blue:#388bfd;--blue2:#1f6feb;--green:#3fb950;--red:#f85149;--orange:#d29922;--purple:#bc8cff;--teal:#39d353;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+    .navbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{display:flex;align-items:center;gap:10px;}
+    .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#39d353,#388bfd);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .logo-text{font-size:18px;font-weight:700;}.logo-text span{color:var(--teal);}
+    .nav-badge{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:3px 10px;border-radius:99px;}
+    .hero{background:linear-gradient(180deg,#161b22,#0d1117);border-bottom:1px solid var(--border);padding:2rem;}
+    .hero-inner{max-width:900px;margin:0 auto;}
+    .hero h1{font-size:24px;font-weight:700;margin-bottom:6px;}
+    .hero p{color:var(--text2);font-size:13px;margin-bottom:1.5rem;}
+    .module-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;}
+    .module-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;cursor:pointer;transition:all 0.15s;text-align:center;}
+    .module-card:hover,.module-card.active{border-color:var(--teal);background:var(--surface2);}
+    .module-card .mc-icon{font-size:1.8rem;margin-bottom:6px;}
+    .module-card h3{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px;}
+    .module-card p{font-size:11px;color:var(--text2);}
+    .main{max-width:900px;margin:0 auto;padding:1.5rem 2rem;}
+    .panel{display:none;}.panel.active{display:block;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;}
+    .card h3{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:1rem;}
+    .file-zone{background:var(--surface2);border:2px dashed var(--border);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:0.75rem;}
+    .file-zone:hover{border-color:var(--teal);}
+    .file-zone .fz-icon{font-size:2rem;margin-bottom:0.5rem;}
+    .file-zone h4{color:var(--text);margin-bottom:4px;}
+    .file-zone p{font-size:12px;color:var(--text2);}
+    .file-input{display:none;}
+    .input-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;font-family:monospace;margin-bottom:8px;}
+    .input-field:focus{border-color:var(--teal);}
+    .submit-btn{background:var(--teal);color:#000;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%;}
+    .submit-btn:hover{opacity:0.9;}
+    .error-box{background:#1a0a0a;border:1px solid var(--red);border-radius:10px;padding:10px 14px;color:var(--red);font-size:13px;margin-bottom:1rem;}
+    .verdict-banner{border-radius:12px;border:1px solid;padding:1.25rem 1.5rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;}
+    .verdict-banner.compromised,.verdict-banner.malicious{background:#1a0a0a;border-color:var(--red);}
+    .verdict-banner.suspicious{background:#1a1200;border-color:var(--orange);}
+    .verdict-banner.clean,.verdict-banner.verified{background:#0a1a0d;border-color:var(--green);}
+    .verdict-banner.tampered{background:#1a0a0a;border-color:var(--red);}
+    .vb-icon{font-size:2.5rem;}
+    .vb-info{flex:1;}
+    .vb-verdict{font-size:22px;font-weight:700;}
+    .compromised .vb-verdict,.malicious .vb-verdict,.tampered .vb-verdict{color:var(--red);}
+    .suspicious .vb-verdict{color:var(--orange);}
+    .clean .vb-verdict,.verified .vb-verdict{color:var(--green);}
+    .vb-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+    .vb-score{text-align:right;}
+    .score-num{font-size:26px;font-weight:700;}
+    .score-label{font-size:11px;color:var(--text3);}
+    .section-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:1rem;overflow:hidden;}
+    .section-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;cursor:pointer;}
+    .section-header:hover{background:var(--surface2);}
+    .sh-title{font-size:13px;font-weight:600;flex:1;}
+    .sh-count{background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:1px 7px;border-radius:99px;}
+    .sh-arrow{color:var(--text3);transition:transform 0.2s;}
+    .sh-arrow.open{transform:rotate(180deg);}
+    .section-body{padding:12px 16px;display:none;}
+    .section-body.open{display:block;}
+    .proc-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);font-size:12px;}
+    .proc-row:last-child{border-bottom:none;}
+    .proc-pid{font-family:monospace;color:var(--text3);width:45px;flex-shrink:0;}
+    .proc-name{flex:1;color:var(--text);}
+    .proc-badge{font-size:10px;padding:1px 6px;border-radius:4px;}
+    .badge-sus{background:#2d1b1b;color:var(--red);}
+    .badge-ok{background:#0a1a0d;color:var(--green);}
+    .conn-row{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2);font-size:12px;align-items:center;flex-wrap:wrap;}
+    .conn-row:last-child{border-bottom:none;}
+    .conn-local{font-family:monospace;color:var(--text2);}
+    .conn-arrow{color:var(--text3);}
+    .conn-remote{font-family:monospace;color:var(--text);}
+    .conn-proc{color:var(--blue);margin-left:auto;}
+    .timeline-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2);font-size:12px;align-items:flex-start;}
+    .timeline-row:last-child{border-bottom:none;}
+    .tl-time{font-family:monospace;color:var(--text3);white-space:nowrap;width:140px;flex-shrink:0;}
+    .tl-badge{font-size:10px;padding:1px 6px;border-radius:4px;flex-shrink:0;font-weight:600;}
+    .sev-high{background:#2d1b1b;color:var(--red);}
+    .sev-medium{background:#1a1200;color:var(--orange);}
+    .sev-info{background:#1c2d47;color:var(--blue);}
+    .tl-msg{color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .hash-table{width:100%;border-collapse:collapse;}
+    .hash-table tr{border-bottom:1px solid var(--border2);}
+    .hash-table tr:last-child{border-bottom:none;}
+    .hash-table td{padding:8px 4px;font-size:12px;}
+    .hash-table td:first-child{color:var(--text2);width:80px;}
+    .hash-table td:last-child{font-family:monospace;color:var(--text);word-break:break-all;}
+    .copy-btn{background:none;border:1px solid var(--border);color:var(--text2);font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;margin-left:6px;}
+    .copy-btn:hover{background:var(--surface2);}
+    .rec-item{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border2);font-size:13px;color:var(--text2);}
+    .rec-item:last-child{border-bottom:none;}
+    .rec-num{background:var(--teal);color:#000;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem;}
+    .stat-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+    .stat-num{font-size:22px;font-weight:700;margin-bottom:2px;}
+    .stat-label{font-size:11px;color:var(--text2);}
+    .s-red{color:var(--red);}.s-green{color:var(--green);}.s-blue{color:var(--blue);}.s-orange{color:var(--orange);}
+    .footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;font-size:12px;color:var(--text3);margin-top:2rem;}
+    @media(max-width:600px){.stats-row{grid-template-columns:repeat(2,1fr);}.module-grid{grid-template-columns:1fr 1fr;}}
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-icon">🔬</div>
+    <div class="logo-text">Forensic<span>Lens</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:12px;color:var(--text3)">v1.0</span>
+    <span class="nav-badge">Digital Forensics & IR Toolkit</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-inner">
+    <h1>🔬 Digital Forensics & Incident Response Platform</h1>
+    <p>Memory Analysis · Live Artifact Collection · Timeline Forensics · Evidence Integrity · Chain of Custody</p>
+    <div class="module-grid">
+      <div class="module-card {% if tab=='memory' or not tab %}active{% endif %}" onclick="switchModule('memory',this)">
+        <div class="mc-icon">🧠</div>
+        <h3>Memory Analysis</h3>
+        <p>Analyze RAM dumps for malware & processes</p>
+      </div>
+      <div class="module-card {% if tab=='artifacts' %}active{% endif %}" onclick="switchModule('artifacts',this)">
+        <div class="mc-icon">🗂️</div>
+        <h3>Artifact Collection</h3>
+        <p>Live system forensics & browser history</p>
+      </div>
+      <div class="module-card {% if tab=='timeline' %}active{% endif %}" onclick="switchModule('timeline',this)">
+        <div class="mc-icon">📅</div>
+        <h3>Timeline Builder</h3>
+        <p>Chronological event reconstruction</p>
+      </div>
+      <div class="module-card {% if tab=='hash' %}active{% endif %}" onclick="switchModule('hash',this)">
+        <div class="mc-icon">🔐</div>
+        <h3>Hash Verifier</h3>
+        <p>Evidence integrity & chain of custody</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  {% if error %}
+  <div class="error-box">⚠ {{ error }}</div>
+  {% endif %}
+
+  <!-- Result -->
+  {% if result and not result.get('error') %}
+  {% set vc = 'clean' %}
+  {% if result.verdict in ['MALICIOUS','COMPROMISED','TAMPERED'] %}{% set vc = 'malicious' %}
+  {% elif result.verdict == 'SUSPICIOUS' %}{% set vc = 'suspicious' %}
+  {% elif result.verdict == 'VERIFIED' %}{% set vc = 'verified' %}
+  {% endif %}
+
+  <div class="verdict-banner {{ vc }}">
+    <div class="vb-icon">
+      {% if vc == 'malicious' %}🚨
+      {% elif vc == 'suspicious' %}⚠️
+      {% elif vc == 'verified' %}🔐
+      {% else %}✅{% endif %}
+    </div>
+    <div class="vb-info">
+      <div class="vb-verdict">{{ result.verdict }}</div>
+      <div class="vb-sub">{{ result.get('scan_type','Forensic Analysis') }} · {{ result.get('filename','Live System') }}</div>
+      {% if result.reasons %}
+        {% for r in result.reasons %}<div style="font-size:12px;color:var(--red);margin-top:3px">⚠ {{ r }}</div>{% endfor %}
+      {% endif %}
+    </div>
+    <div class="vb-score">
+      <div class="score-num" style="color:{% if vc=='malicious' %}var(--red){% elif vc=='suspicious' %}var(--orange){% else %}var(--green){% endif %}">
+        {{ result.confidence }}%
+      </div>
+      <div class="score-label">confidence</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-num {% if result.is_phishing %}s-red{% else %}s-green{% endif %}">
+        {% if result.is_phishing %}⚠{% else %}✓{% endif %}
+      </div>
+      <div class="stat-label">Threat Status</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num s-orange">{{ result.threat_score }}</div>
+      <div class="stat-label">Threat Score</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num s-blue">{{ result.get('reasons',[])|length }}</div>
+      <div class="stat-label">Indicators</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num s-blue">{{ result.get('scan_type','N/A')[:8] }}</div>
+      <div class="stat-label">Module</div>
+    </div>
+  </div>
+
+  <!-- Memory Analysis Results -->
+  {% if module == 'memory' %}
+  {% if result.get('processes') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('procs')">
+      <span>⚙️</span><span class="sh-title">Running Processes</span>
+      <span class="sh-count">{{ result.processes.total }} total · {{ result.processes.suspicious|length }} suspicious</span>
+      <span class="sh-arrow open" id="arr-procs">▼</span>
+    </div>
+    <div class="section-body open" id="body-procs">
+      {% for proc in result.processes.processes[:15] %}
+      <div class="proc-row">
+        <span class="proc-pid">{{ proc.pid }}</span>
+        <span class="proc-name">{{ proc.name }}</span>
+        <span class="proc-badge {% if proc.get('suspicious') %}badge-sus{% else %}badge-ok{% endif %}">
+          {% if proc.get('suspicious') %}SUSPICIOUS{% else %}OK{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.get('network') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('net')">
+      <span>🌐</span><span class="sh-title">Network Connections</span>
+      <span class="sh-count">{{ result.network.total }} total · {{ result.network.suspicious|length }} suspicious</span>
+      <span class="sh-arrow" id="arr-net">▼</span>
+    </div>
+    <div class="section-body" id="body-net">
+      {% for conn in result.network.connections[:10] %}
+      <div class="conn-row">
+        <span class="conn-local">{{ conn.local_addr }}</span>
+        <span class="conn-arrow">→</span>
+        <span class="conn-remote" style="{% if conn.get('suspicious') %}color:var(--red){% endif %}">{{ conn.foreign_addr }}</span>
+        <span class="conn-proc">{{ conn.get('process','Unknown') }}</span>
+        {% if conn.get('suspicious') %}<span class="proc-badge badge-sus">⚠ {{ conn.reason }}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.get('injections') and result.injections.total > 0 %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('inj')">
+      <span>💉</span><span class="sh-title">Code Injections Detected</span>
+      <span class="sh-count" style="color:var(--red)">{{ result.injections.total }} found</span>
+      <span class="sh-arrow" id="arr-inj">▼</span>
+    </div>
+    <div class="section-body" id="body-inj">
+      {% for inj in result.injections.injections %}
+      <div class="proc-row">
+        <span class="proc-name" style="color:var(--red)">{{ inj.process }} (PID: {{ inj.pid }})</span>
+        <span style="font-family:monospace;font-size:11px;color:var(--text2)">{{ inj.address }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- Artifact Results -->
+  {% if module == 'artifacts' %}
+  {% if result.get('processes') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('live-procs')">
+      <span>⚙️</span><span class="sh-title">Live Processes</span>
+      <span class="sh-count">{{ result.processes|length }}</span>
+      <span class="sh-arrow open" id="arr-live-procs">▼</span>
+    </div>
+    <div class="section-body open" id="body-live-procs">
+      {% for proc in result.processes[:15] %}
+      <div class="proc-row">
+        <span class="proc-pid">{{ proc.pid }}</span>
+        <span class="proc-name">{{ proc.name }}</span>
+        <span style="font-size:11px;color:var(--text3)">CPU:{{ proc.cpu }}% MEM:{{ proc.memory }}%</span>
+        {% if proc.get('suspicious') %}<span class="proc-badge badge-sus">⚠</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.get('connections') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('live-net')">
+      <span>🌐</span><span class="sh-title">Active Network Connections</span>
+      <span class="sh-count">{{ result.connections|length }}</span>
+      <span class="sh-arrow" id="arr-live-net">▼</span>
+    </div>
+    <div class="section-body" id="body-live-net">
+      {% for conn in result.connections %}
+      <div class="conn-row">
+        <span class="conn-local">{{ conn.local }}</span>
+        <span class="conn-arrow">→</span>
+        <span class="conn-remote" style="{% if conn.get('suspicious') %}color:var(--red){% endif %}">{{ conn.remote }}</span>
+        <span style="font-size:11px;color:var(--text3)">{{ conn.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if result.get('startup') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('startup')">
+      <span>🚀</span><span class="sh-title">Startup / Persistence Items</span>
+      <span class="sh-count">{{ result.startup|length }}</span>
+      <span class="sh-arrow" id="arr-startup">▼</span>
+    </div>
+    <div class="section-body" id="body-startup">
+      {% for item in result.startup %}
+      <div class="proc-row">
+        <span class="proc-name">{{ item.get('name','') }}</span>
+        <span style="font-size:11px;color:var(--text3)">{{ item.get('value','') or item.get('location','') }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- Timeline Results -->
+  {% if module == 'timeline' %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('timeline')">
+      <span>📅</span><span class="sh-title">Forensic Timeline</span>
+      <span class="sh-count">{{ result.total_events }} events · {{ result.high_events }} high severity</span>
+      <span class="sh-arrow open" id="arr-timeline">▼</span>
+    </div>
+    <div class="section-body open" id="body-timeline">
+      {% for event in result.events %}
+      <div class="timeline-row">
+        <span class="tl-time">{{ event.timestamp }}</span>
+        <span class="tl-badge sev-{{ event.severity }}">{{ event.type }}</span>
+        <span class="tl-msg">{{ event.message }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Hash Results -->
+  {% if module == 'hash' and hashes %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('hashes')">
+      <span>🔐</span><span class="sh-title">File Hashes</span>
+      <span class="sh-count">Chain of Custody</span>
+      <span class="sh-arrow open" id="arr-hashes">▼</span>
+    </div>
+    <div class="section-body open" id="body-hashes">
+      <table class="hash-table">
+        <tr><td>File</td><td>{{ hashes.filename }} ({{ hashes.file_size }})</td></tr>
+        <tr><td>MD5</td><td>{{ hashes.md5 }}<button class="copy-btn" onclick="copyText('{{ hashes.md5 }}')">Copy</button></td></tr>
+        <tr><td>SHA1</td><td>{{ hashes.sha1 }}<button class="copy-btn" onclick="copyText('{{ hashes.sha1 }}')">Copy</button></td></tr>
+        <tr><td>SHA256</td><td>{{ hashes.sha256 }}<button class="copy-btn" onclick="copyText('{{ hashes.sha256 }}')">Copy</button></td></tr>
+        <tr><td>Time</td><td>{{ hashes.computed_at }}</td></tr>
+      </table>
+    </div>
+  </div>
+
+  {% if result.get('verification') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('verify')">
+      <span>✅</span><span class="sh-title">Hash Verification</span>
+      <span class="sh-count" style="color:{% if result.verification.verified %}var(--green){% else %}var(--red){% endif %}">
+        {{ '✓ MATCH' if result.verification.verified else '✗ MISMATCH' }}
+      </span>
+      <span class="sh-arrow open" id="arr-verify">▼</span>
+    </div>
+    <div class="section-body open" id="body-verify">
+      <table class="hash-table">
+        <tr><td>Expected</td><td style="color:var(--blue)">{{ result.verification.expected_hash }}</td></tr>
+        <tr><td>Computed</td><td style="color:{% if result.verification.verified %}var(--green){% else %}var(--red){% endif %}">{{ result.verification.computed_hash }}</td></tr>
+        <tr><td>Result</td><td style="font-weight:700;color:{% if result.verification.verified %}var(--green){% else %}var(--red){% endif %}">{{ result.verification.verdict }}</td></tr>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- SOC Recommendations -->
+  {% if result.get('recommendations') %}
+  <div class="section-card">
+    <div class="section-header" onclick="toggle('recs')">
+      <span>📋</span><span class="sh-title">DFIR Recommendations</span>
+      <span class="sh-count">{{ result.recommendations|length }}</span>
+      <span class="sh-arrow" id="arr-recs">▼</span>
+    </div>
+    <div class="section-body" id="body-recs">
+      {% for rec in result.recommendations %}
+      <div class="rec-item"><div class="rec-num">{{ loop.index }}</div><span>{{ rec }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+  <!-- Input Panels -->
+  <div id="panel-memory" class="panel {% if tab=='memory' or not tab %}active{% endif %}">
+    <div class="card">
+      <h3>🧠 Memory Dump Analysis — Upload RAM dump file</h3>
+      <form method="POST" action="/scan/memory" enctype="multipart/form-data">
+        <div class="file-zone" onclick="document.getElementById('memFile').click()">
+          <div class="fz-icon">💾</div>
+          <h4 id="memLabel">Click to upload memory dump</h4>
+          <p>Supports: .raw .mem .dmp .vmem files</p>
+          <p style="margin-top:6px;font-size:11px;color:var(--text3)">If no dump available — upload any file to see demo analysis</p>
+        </div>
+        <input type="file" id="memFile" name="file" class="file-input" accept=".raw,.mem,.dmp,.vmem,.bin" onchange="updateLabel(this,'memLabel')"/>
+        <button type="submit" class="submit-btn">Analyze Memory</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="panel-artifacts" class="panel {% if tab=='artifacts' %}active{% endif %}">
+    <div class="card">
+      <h3>🗂️ Live System Artifact Collection</h3>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:1rem">Collects running processes, network connections, startup items, user accounts, and recent files from THIS live system.</p>
+      <form method="POST" action="/scan/artifacts">
+        <button type="submit" class="submit-btn">🔍 Collect Artifacts Now</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="panel-timeline" class="panel {% if tab=='timeline' %}active{% endif %}">
+    <div class="card">
+      <h3>📅 Forensic Timeline — Upload log file or analyze system logs</h3>
+      <form method="POST" action="/scan/timeline" enctype="multipart/form-data">
+        <div class="file-zone" onclick="document.getElementById('logFile').click()">
+          <div class="fz-icon">📋</div>
+          <h4 id="logLabel">Upload log file (optional)</h4>
+          <p>auth.log · syslog · Windows Event Log · Apache/Nginx · any text log</p>
+        </div>
+        <input type="file" id="logFile" name="file" class="file-input" accept=".log,.txt,.csv,.evtx" onchange="updateLabel(this,'logLabel')"/>
+        <button type="submit" class="submit-btn">Build Timeline</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="panel-hash" class="panel {% if tab=='hash' %}active{% endif %}">
+    <div class="card">
+      <h3>🔐 Evidence Hash Verification & Chain of Custody</h3>
+      <form method="POST" action="/scan/hash" enctype="multipart/form-data">
+        <div class="file-zone" onclick="document.getElementById('hashFile').click()">
+          <div class="fz-icon">📁</div>
+          <h4 id="hashLabel">Upload evidence file</h4>
+          <p>Any file — MD5, SHA1, SHA256 will be computed</p>
+        </div>
+        <input type="file" id="hashFile" name="file" class="file-input" onchange="updateLabel(this,'hashLabel')"/>
+        <input type="text" name="expected_hash" class="input-field" placeholder="Known good hash to verify against (optional)"/>
+        <input type="text" name="case_number" class="input-field" placeholder="Case number (e.g. CASE-2026-001)"/>
+        <button type="submit" class="submit-btn">Verify & Log Evidence</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <strong style="color:var(--teal)">ForensicLens</strong> — Digital Forensics & Incident Response Toolkit &nbsp;·&nbsp;
+  Volatility3 · psutil · Chain of Custody &nbsp;·&nbsp;
+  <span>For authorized forensic investigations only</span>
+</div>
+
+<script>
+function switchModule(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.module-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+function toggle(id) {
+  const body  = document.getElementById('body-' + id);
+  const arrow = document.getElementById('arr-' + id);
+  const open  = body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open', open);
+}
+function updateLabel(input, labelId) {
+  if (input.files[0]) document.getElementById(labelId).textContent = '📄 ' + input.files[0].name;
+}
+function copyText(text) {
+  navigator.clipboard.writeText(text);
+}
+</script>
+</body>
+</html>
