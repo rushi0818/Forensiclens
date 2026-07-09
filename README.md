@@ -338,7 +338,6 @@ For VirusTotal hash checking:
 | Project | Description | Link |
 |---------|-------------|------|
 | 🔍 ThreatLens | Phishing & Malware Detection Platform | [GitHub](#) |
-| 🍯 HoneyNet | Intelligent Honeypot System | [GitHub](#) |
 | 📊 Wazuh SOC | Enterprise SIEM Setup | [GitHub](#) |
 
 ---
